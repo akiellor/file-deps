@@ -1,4 +1,4 @@
-meta "file" do
+meta "owner_file" do
   accepts_value_for :source
   accepts_value_for :target
   accepts_value_for :owner, "root"
@@ -10,14 +10,28 @@ meta "file" do
       dependency.load_path.parent / source
     end
 
-    met? { target.p.file? && target.p.owner == owner && target.p.group == group && File.stat(target).mode.to_s(8)[3..5] == permissions && source_path.read == target.p.read } 
+    def target_path
+      home_path / target
+    end
+
+    def home_path
+      Etc.getpwnam(owner).dir.p
+    end
+
+    def paths
+      target_path.expand_path.to_enum(:descend).to_a - home_path.expand_path.to_enum(:descend).to_a
+    end
+
+    met? { paths.all? {|p| p.exist? && p.owner == owner && p.group == group && File.stat(p).mode.to_s(8)[-3..-1] == permissions } && source_path.read == target_path.read } 
     meet {
-      target.p.parent.create_dir
-      target.p.open("w+") do |f|
+      target_path.parent.create_dir
+      target_path.open("w+") do |f|
         f << source_path.read
       end
-      shell! "chown #{owner}:#{group} #{target}"
-      shell! "chmod #{permissions} #{target}"
+      paths.each do |p|
+        shell! "chown #{owner}:#{group} #{p}"
+        shell! "chmod #{permissions} #{p}"
+      end
     }
   }
 end
