@@ -12,6 +12,7 @@ meta "file" do
 
     met? { target.p.file? && target.p.owner == owner && target.p.group == group && File.stat(target).mode.to_s(8)[3..5] == permissions && source_path.read == target.p.read } 
     meet {
+      target.p.parent.create_dir
       target.p.open("w+") do |f|
         f << source_path.read
       end
