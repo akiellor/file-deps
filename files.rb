@@ -3,7 +3,7 @@ meta "owner_file" do
   accepts_value_for :target
   accepts_value_for :owner, "root"
   accepts_value_for :group, "root"
-  accepts_value_for :permissions, "644"
+  accepts_value_for :permissions, "744"
 
   template {
     def source_path
